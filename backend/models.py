@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Column, Integer, String, Boolean
 from database import Base
 
@@ -8,6 +8,8 @@ class WeaponPattern(BaseModel):
     progress: int
     completion_value: int
     is_completed: bool
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class WeaponPatternDB(Base):
     __tablename__ = "weapon_patterns"

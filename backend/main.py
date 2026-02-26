@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from typing import List
-from models import WeaponPattern
+from sqlalchemy.orm import Session
+from models import WeaponPattern, WeaponPatternDB
 from services.bungie_client import fetch_manifest_version
+from database import engine, Base, get_db
 
 from database import engine, Base
 from models import WeaponPatternDB
@@ -24,22 +26,6 @@ async def health_check():
 
 # The endpoint the Angular frontend will call
 @app.get("/api/patterns", response_model=List[WeaponPattern])
-async def get_weapon_patterns():
-    # MOCK DATA: will replace this with the Bungie API call
-    mock_data = [
-            {
-                "hash_id": 123456789,
-                "name": "Apex Predator",
-                "progress": 3,
-                "completion_value": 5,
-                "is_completed": False
-            },
-            {
-                "hash_id": 987654321,
-                "name": "The Enigma",
-                "progress": 1,
-                "completion_value": 1,
-                "is_completed": True
-            }
-    ]
-    return mock_data
+async def get_weapon_patterns(db: Session = Depends(get_db)):
+    weapons = db.query(WeaponPatternDB).all()
+    return weapons
