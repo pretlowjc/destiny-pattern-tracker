@@ -13,18 +13,23 @@ async def run_etl_pipeline():
     weapons_to_insert = []
 
     for hash_id, item_data in manifest_data.items():
+        # itemType 3 corresponds to weapons in Destiny 2's manifest.
         if item_data.get('itemType') == 3:
+
+            inventory = item_data.get('inventory', {})
+            is_craftable = inventory.get('recipeItemHash') is not None
+
             name = item_data.get('displayProperties', {}).get('name', 'Unknown')
 
-            if name and name != "Classified":
-                new_weapon = WeaponPatternDB(
-                    hash_id=int(hash_id),
+            if is_craftable:
+                weapon = WeaponPatternDB(
+                    hash_id=hash_id,
                     name=name,
                     progress=0,
                     completion_value=5,
                     is_completed=False
                 )
-                weapons_to_insert.append(new_weapon)
+                weapons_to_insert.append(weapon)
                 
     print(f"Found {len(weapons_to_insert)} valid weapons. Step : Loading into database...")
 
