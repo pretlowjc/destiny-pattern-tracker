@@ -6,11 +6,13 @@ import urllib.parse
 
 load_dotenv()
 
-async def fetch_manifest_version():
-    api_key = os.getenv("BUNGIE_API_KEY")
-    url = "https://www.bungie.net/Platform/Destiny2/Manifest/"
-    headers = {"X-API-Key": api_key}
+api_key = os.getenv("BUNGIE_API_KEY")
+url = "https://www.bungie.net/Platform/Destiny2/Manifest/"
+headers = {"X-API-Key": api_key}
+client_id = os.getenv("BUNGIE_CLIENT_ID")
+client_secret = os.getenv("BUNGIE_CLIENT_SECRET")
 
+async def fetch_manifest_version():
     async with httpx.AsyncClient() as client:
         response = await client.get(url, headers=headers)
 
@@ -21,10 +23,6 @@ async def fetch_manifest_version():
             raise HTTPException(status_code=response.status_code, detail="Failed to fetch manifest version")
 
 async def fetch_item_definitions():
-    api_key = os.getenv("BUNGIE_API_KEY")
-    url = "https://www.bungie.net/Platform/Destiny2/Manifest/"
-    headers = {"X-API-Key": api_key}
-
     async with httpx.AsyncClient() as client:
         manifest_resp = await client.get(url, headers=headers)
         if manifest_resp.status_code != 200:
@@ -44,30 +42,16 @@ async def fetch_item_definitions():
         return item_resp.json()
     
 def get_bungie_auth_url() -> str:
-    """
-    Generates the URL to send the user to Bungie's login page.
-    """
-    client_id = os.getenv("BUNGIE_CLIENT_ID")
     auth_url = f"https://www.bungie.net/en/OAuth/Authorize?client_id={client_id}&response_type=code&state=capstone123"
-
     return auth_url
 
 async def exchange_code_for_token(auth_code: str) -> dict:
-    """
-    Trades the temporary authorization code for an Access Token.
-    """
-    client_id = os.getenv("BUNGIE_CLIENT_ID")
-    client_secret = os.getenv("BUNGIE_CLIENT_SECRET")
-
     token_url = "https://www.bungie.net/Platform/App/OAuth/Token"
 
     # Bungie requires token exchange to be sent as form-encoded data, NOT JSON.
-
     payload = {
         "grant_type": "authorization_code",
-        "code": auth_code,
-        "client_id": client_id,
-        "client_secret": client_secret
+        "code": auth_code
     }
 
     encoded_payload = urllib.parse.urlencode(payload)

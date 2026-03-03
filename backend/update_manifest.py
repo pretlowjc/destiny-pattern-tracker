@@ -31,7 +31,7 @@ async def run_etl_pipeline():
                 )
                 weapons_to_insert.append(weapon)
                 
-    print(f"Found {len(weapons_to_insert)} valid weapons. Step : Loading into database...")
+    print(f"Found {len(weapons_to_insert)} valid weapons. \nStep 3: Loading into database...")
 
     db = SessionLocal()
     try:
