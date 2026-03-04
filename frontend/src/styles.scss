@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-destinyDark text-gray-200 m-0 p-0 font-sans;
+}
