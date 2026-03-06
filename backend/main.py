@@ -6,6 +6,8 @@ from services.bungie_client import fetch_manifest_version
 from database import engine, Base, get_db
 from fastapi.responses import RedirectResponse
 from services.bungie_client import get_bungie_auth_url, exchange_code_for_token
+from fastapi.middleware.cors import CORSMiddleware
+
 
 from database import engine, Base
 from models import WeaponPatternDB
@@ -13,6 +15,14 @@ from models import WeaponPatternDB
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Destiny 2 Pattern Tracker API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/api/manifest-version")
 async def get_manifest_version():
@@ -43,7 +53,7 @@ async def login_to_bungie():
 @app.get("/api/auth/callback")
 async def bungie_auth_callback(code: str, state: str):
     """
-    Endpoint 2: Bungie sendt hs user back here with the secret 'code'.
+    Endpoint 2: Bungie sent hs user back here with the secret 'code'.
     """
     # Security check to ensure the request acutally came from our login flow
     if state != "capstone123":
@@ -52,10 +62,10 @@ async def bungie_auth_callback(code: str, state: str):
     # Trade the code for the VIP Access Token
     token_data = await exchange_code_for_token(code)
 
-    # In a production app, we would save this token to the database or an encrpytion cookie.
-    # For testing right now, we will just return it to the screen to prove it works.
-    return {
-        "message": "OAuth 2.0 Handshake Complete!",
-        "access_token": token_data.get("access_token"),
-        "membership_id": token_data.get("membership_id")
-    }
+    access_token = token_data.get("access_token")
+
+    # Send them back to the Angular frontend
+    # We append the token to the URL so Angular can grab it out of the address bar
+    frontend_url = f"http://localhost:4200/dashboard?token={access_token}"
+
+    return RedirectResponse(url=frontend_url)

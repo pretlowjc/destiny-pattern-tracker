@@ -1,1 +1,42 @@
-<p>dashboard works!</p>
+<div class="min-h-screen bg-destinyDark text-gray-200 p-8">
+
+    <header class="mb-10 border-b border-gray-800 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100 tracking-widest uppercase">
+            Weapon <span class="text-destinyGold">Patterns</span>
+        </h1>
+        <p class="text-gray-400 mt-2">Track your deepsight resonance progress across the system.</p>
+    </header>
+
+    @if (isLoading) {
+    <div class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-destinyGold"></div>
+    </div>
+    }
+
+    @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+        @for (weapon of weapons; track weapon.id) {
+        <div
+            class="bg-gray-900 border border-gray-700 rounded-lg p-5 shadow-lg hover:border-destinyGold transition-colors duration-300">
+
+            <div class="flex items-center space-x-4 mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-100">{{ weapon.name }}</h2>
+                    <p class="text-sm text-destinyBlue uppercase tracking-wide">Pattern Unlocked</p>
+                </div>
+            </div>
+
+        </div>
+        }
+
+        @empty {
+        <div class="col-span-full text-center text-gray-500 py-12 bg-gray-900 border border-gray-800 rounded-lg">
+            No weapon patterns found in the database.
+        </div>
+        }
+
+    </div>
+    }
+
+</div>
