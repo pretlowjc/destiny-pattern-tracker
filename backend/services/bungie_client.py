@@ -75,3 +75,42 @@ async def exchange_code_for_token(auth_code: str) -> dict:
             raise HTTPException(status_code=401, detail="Failed to authenticate with Bungie")
             
         return response.json()
+    
+async def get_user_memberships(access_token: str) -> dict:
+    """
+    Uses the OAuth token to get the user's Destiny 2 Membership ID and Type.
+    """
+    # Note: Putting the trailing slash back, as Bungie's official docs request it for this specific endpoint
+    url = "https://www.bungie.net/Platform/User/GetMembershipsForCurrentUser/"
+    
+    # 1. Strip everything, including the invisible Windows BOM (\ufeff)
+    raw_api_key = os.getenv("BUNGIE_API_KEY", "")
+    clean_api_key = raw_api_key.strip(' "\'\r\n\ufeff')
+    clean_token = access_token.strip(' "\'\r\n\ufeff')
+
+    # ==========================================
+    # THE X-RAY: Let's see exactly what we are sending
+    print("\n=== OUTGOING BUNGIE REQUEST ===")
+    print(f"API Key Length: {len(clean_api_key)} characters (A valid Bungie key MUST be exactly 32)")
+    print(f"API Key Starts With: {clean_api_key[:4]}...")
+    print(f"Token Length: {len(clean_token)} characters")
+    print("===============================\n")
+    # ==========================================
+
+    headers = {
+        "X-API-Key": clean_api_key,
+        "Authorization": f"Bearer {clean_token}",
+        "User-Agent": "DestinyPatternTracker/1.0"
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+        
+        if response.status_code != 200:
+            print("\n=== BUNGIE API REJECTED THE REQUEST ===")
+            print(f"Bungie Status Code: {response.status_code}")
+            print(f"Bungie Error: {repr(response.text[:250])}") 
+            print("=======================================\n")
+            raise HTTPException(status_code=response.status_code, detail="Failed to fetch user profile")
+            
+        return response.json()
