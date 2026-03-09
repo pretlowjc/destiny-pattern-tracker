@@ -1,42 +1,61 @@
 <div class="min-h-screen bg-destinyDark text-gray-200 p-8">
+  
+  <header class="mb-8 border-b border-gray-800 pb-4">
+    <h1 class="text-4xl font-bold text-gray-100 tracking-widest uppercase">
+      Weapon <span class="text-destinyGold">Patterns</span>
+    </h1>
+    <p class="text-gray-400 mt-2">Track your deepsight resonance progress across the system.</p>
+  </header>
 
-    <header class="mb-10 border-b border-gray-800 pb-4">
-        <h1 class="text-4xl font-bold text-gray-100 tracking-widest uppercase">
-            Weapon <span class="text-destinyGold">Patterns</span>
-        </h1>
-        <p class="text-gray-400 mt-2">Track your deepsight resonance progress across the system.</p>
-    </header>
+  <div class="mb-8 flex flex-col md:flex-row gap-4">
+    <input 
+      type="text" 
+      placeholder="Search for a weapon..." 
+      class="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg p-3 flex-grow focus:outline-none focus:border-destinyGold transition-colors"
+      (input)="updateSearch($event)"
+    />
+    
+    <select 
+      class="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg p-3 focus:outline-none focus:border-destinyGold transition-colors cursor-pointer"
+      (change)="updateCategory($event)"
+    >
+      <option value="All">All Weapon Types</option>
+      <option value="Auto Rifle">Auto Rifle</option>
+      <option value="Pulse Rifle">Pulse Rifle</option>
+      <option value="Glaive">Glaive</option>
+      <option value="Linear Fusion Rifle">Linear Fusion</option>
+    </select>
+  </div>
 
-    @if (isLoading) {
+  @if (isLoading()) {
     <div class="flex justify-center items-center h-64">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-destinyGold"></div>
+      <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-destinyGold"></div>
     </div>
-    }
-
-    @else {
+  } 
+  
+  @else {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-
-        @for (weapon of weapons; track weapon.id) {
-        <div
-            class="bg-gray-900 border border-gray-700 rounded-lg p-5 shadow-lg hover:border-destinyGold transition-colors duration-300">
-
-            <div class="flex items-center space-x-4 mb-4">
-                <div>
-                    <h2 class="text-xl font-bold text-gray-100">{{ weapon.name }}</h2>
-                    <p class="text-sm text-destinyBlue uppercase tracking-wide">Pattern Unlocked</p>
-                </div>
+      
+      @for (weapon of filteredWeapons(); track weapon.id) {
+        <div class="bg-gray-900 border border-gray-700 rounded-lg p-5 shadow-lg hover:border-destinyGold transition-colors duration-300">
+          
+          <div class="flex items-center space-x-4 mb-4">
+            <div>
+              <h2 class="text-xl font-bold text-gray-100">{{ weapon.name }}</h2>
+              <p class="text-sm text-destinyBlue uppercase tracking-wide">{{ weapon.type }}</p>
             </div>
-
+          </div>
+          
         </div>
-        }
-
-        @empty {
+      } 
+      
+      @empty {
         <div class="col-span-full text-center text-gray-500 py-12 bg-gray-900 border border-gray-800 rounded-lg">
-            No weapon patterns found in the database.
+          No weapons match your search or filter.
         </div>
-        }
+      }
 
     </div>
-    }
+  }
 
 </div>
