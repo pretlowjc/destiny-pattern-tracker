@@ -20,6 +20,7 @@
       (change)="updateCategory($event)"
     >
       <option value="All">All Weapon Types</option>
+      <!-- Need to remove hard coded values here and populate dynamically -->
       <option value="Auto Rifle">Auto Rifle</option>
       <option value="Pulse Rifle">Pulse Rifle</option>
       <option value="Glaive">Glaive</option>
@@ -37,12 +38,38 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       
       @for (weapon of filteredWeapons(); track weapon.id) {
-        <div class="bg-gray-900 border border-gray-700 rounded-lg p-5 shadow-lg hover:border-destinyGold transition-colors duration-300">
+<div class="bg-gray-900 border border-gray-700 rounded-lg p-5 shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col justify-between"
+             [class.opacity-60]="weapon.progress >= weapon.completionValue"
+             [class.hover:border-destinyGold]="weapon.progress < weapon.completionValue">
           
-          <div class="flex items-center space-x-4 mb-4">
+          <div class="flex items-center space-x-4 mb-6">
+            @if (weapon.icon) {
+              <img [src]="weapon.icon" [alt]="weapon.name" class="w-16 h-16 object-cover rounded border-2 border-gray-600 bg-black">
+            }
+
             <div>
               <h2 class="text-xl font-bold text-gray-100">{{ weapon.name }}</h2>
               <p class="text-sm text-destinyBlue uppercase tracking-wide">{{ weapon.type }}</p>
+            </div>
+          </div>
+          
+          <div class="mt-auto">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400 font-semibold tracking-wider text-xs uppercase">Pattern Progress</span>
+              
+              <span class="font-bold"
+                    [class.text-green-400]="weapon.progress >= weapon.completionValue"
+                    [class.text-destinyGold]="weapon.progress === weapon.completionValue - 1">
+                {{ weapon.progress }} / {{ weapon.completionValue }}
+              </span>
+            </div>
+            
+            <div class="w-full bg-gray-800 rounded-full h-2.5 border border-gray-700">
+              <div class="h-2.5 rounded-full transition-all duration-1000 ease-out"
+                   [style.width.%]="(weapon.progress / weapon.completionValue) * 100"
+                   [class.bg-green-500]="weapon.progress >= weapon.completionValue"
+                   [class.bg-destinyGold]="weapon.progress < weapon.completionValue">
+              </div>
             </div>
           </div>
           

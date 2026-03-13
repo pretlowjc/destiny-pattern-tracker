@@ -19,16 +19,34 @@ export class DashboardComponent implements OnInit {
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('All');
 
-  // This magically recalculates itself anytime the search query or category changes!
+// This magically recalculates itself anytime the search query or category changes!
   filteredWeapons = computed(() => {
     const query = this.searchQuery().toLowerCase();
     const category = this.selectedCategory();
     
-    return this.weapons().filter(w => {
+    let filtered = this.weapons().filter(w => {
       const matchesSearch = w.name.toLowerCase().includes(query);
       const matchesCategory = category === 'All' || w.type === category;
       return matchesSearch && matchesCategory;
     });
+
+    // --- DAY 19: Sorting Logic ---
+    filtered.sort((a, b) => {
+      const aComplete = a.progress >= a.completionValue ? 1 : 0;
+      const bComplete = b.progress >= b.completionValue ? 1 : 0;
+      
+      // 1. If one is complete and the other isn't, push the complete one down
+      if (aComplete !== bComplete) {
+        return aComplete - bComplete;
+      }
+      
+      // 2. Otherwise, sort by percentage complete (highest percentage at the top)
+      const aPercentage = a.progress / a.completionValue;
+      const bPercentage = b.progress / b.completionValue;
+      return bPercentage - aPercentage;
+    });
+
+    return filtered;
   });
 
   constructor(
