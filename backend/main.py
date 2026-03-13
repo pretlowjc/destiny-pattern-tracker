@@ -6,8 +6,9 @@ from models import WeaponPattern, WeaponPatternDB
 from services.bungie_client import fetch_manifest_version
 from database import engine, Base, get_db
 from fastapi.responses import RedirectResponse
-from services.bungie_client import get_bungie_auth_url, exchange_code_for_token, get_user_memberships
+from services.bungie_client import get_bungie_auth_url, exchange_code_for_token, get_user_memberships, get_profile_records, fetch_record_definitions
 from fastapi.middleware.cors import CORSMiddleware
+
 
 
 from database import engine, Base
@@ -17,6 +18,17 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Destiny 2 Pattern Tracker API")
 
+# --- THE MANIFEST CACHE ---
+# We store the Manifest in memory here so it's instantly available to all users
+MANIFEST_CACHE = {}
+
+@app.on_event("startup")
+async def load_manifest_on_startup():
+    global MANIFEST_CACHE
+    print("\nStarting up... Downloading Bungie Manifest.")
+    MANIFEST_CACHE = await fetch_record_definitions()
+    print(f"SUCCESS! Loaded {len(MANIFEST_CACHE)} records into memory.\n")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:4200"],
@@ -24,6 +36,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 
 @app.get("/api/manifest-version")
 async def get_manifest_version():
@@ -39,55 +53,66 @@ async def health_check():
 
 @app.get("/api/patterns")
 async def get_live_weapon_patterns(request: Request):
-    """
-    Day 14: The Live Data Pipeline. 
-    Intercepts the token, asks Bungie who the user is, and returns their personalized dashboard.
-    """
-    # 1. Grab the token from Angular's HTTP Request
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing authentication token")
     
     token = auth_header.split(" ", 1)[1]
 
-    # 2. Use our existing function to ask Bungie who this token belongs to
+    # --- STEP 1: Get Identity ---
     bungie_data = await get_user_memberships(token)
-    
-    response_data = bungie_data.get("Response") or {}
-    destiny_memberships = response_data.get("destinyMemberships") or []
-    
-    # Fallback to "Guardian" if something goes wrong
-    display_name = "Guardian"
-    if destiny_memberships:
-        display_name = destiny_memberships[0].get("bungieGlobalDisplayName", "Guardian")
+    destiny_memberships = bungie_data.get("Response", {}).get("destinyMemberships", [])
+    if not destiny_memberships:
+        raise HTTPException(status_code=404, detail="No Destiny account found.")
+        
+    m_id = destiny_memberships[0].get("membershipId")
+    m_type = destiny_memberships[0].get("membershipType")
 
-    # 3. Return the personalized weapon data directly to Angular!
-    return [
-        {
-            "id": 1, 
-            "name": f"The Enigma (Owned by {display_name})", 
-            "type": "Glaive",
-            "progress": 5
-        },
-        {
-            "id": 2, 
-            "name": f"Ammit AR2 (Live sync for {display_name})", 
-            "type": "Auto Rifle",
-            "progress": 5
-        },
-        {
-            "id": 3, 
-            "name": "BXR-Battler", 
-            "type": "Pulse Rifle",
-            "progress": 5
-        },
-        {
-            "id": 4, 
-            "name": "Taipan-4fr", 
-            "type": "Linear Fusion Rifle",
-            "progress": 5
-        }
-    ]
+    # --- STEP 2: Fetch Live Records ---
+    profile_data = await get_profile_records(m_type, m_id, token)
+    profile_records = profile_data.get("Response", {}).get("profileRecords", {}).get("data", {}).get("records", {})
+
+    # --- STEP 3: The Dynamic Manifest Merge ---
+    live_weapon_data = []
+    weapon_id_counter = 1
+
+    # Look at every single record the user has live data for
+    for record_hash_str, user_record in profile_records.items():
+        
+        # Look up what this record actually is in our massive Manifest dictionary
+        manifest_record = MANIFEST_CACHE.get(record_hash_str, {})
+        display_props = manifest_record.get("displayProperties", {})
+        
+        name = display_props.get("name", "")
+        description = display_props.get("description", "").lower()
+        
+        # THE FILTER: Bungie uses the exact phrase "weapon's pattern" or "extract a pattern" for deepsight records!
+        if "pattern" in description and "extract" in description:
+            
+            # Dig into the user's save data for this specific weapon
+            objectives = user_record.get("objectives", [])
+            current_progress = 0
+            completion_value = 5
+            
+            if objectives:
+                current_progress = objectives[0].get("progress", 0)
+                completion_value = objectives[0].get("completionValue", 5)
+
+            icon_path = display_props.get("icon", "")
+            icon_url = f"https://www.bungie.net{icon_path}" if icon_path else None
+
+            live_weapon_data.append({
+                "id": weapon_id_counter,
+                "name": name,
+                "type": "Craftable Weapon", 
+                "progress": current_progress,
+                "completionValue": completion_value,
+                "icon": icon_url
+            })
+            weapon_id_counter += 1
+
+    print(f"\n[MERGE COMPLETE] Found {len(live_weapon_data)} craftable weapons for this user!\n")
+    return live_weapon_data
 
 @app.get("/api/auth/login")
 async def login_to_bungie():

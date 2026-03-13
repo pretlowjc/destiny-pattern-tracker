@@ -41,6 +41,34 @@ async def fetch_item_definitions():
         
         return item_resp.json()
     
+async def fetch_record_definitions() -> dict:
+    """
+    Downloads the JSON slice of the Manifest containing Triumph and Pattern text.
+    """
+    url = "https://www.bungie.net/Platform/Destiny2/Manifest/"
+    
+    # We don't need the user token for the Manifest, just the API key
+    raw_api_key = os.getenv("BUNGIE_API_KEY", "")
+    headers = {"X-API-Key": raw_api_key.strip(' "\'\r\n\ufeff')}
+
+    async with httpx.AsyncClient() as client:
+        # 1. Ask Bungie where the latest Manifest is
+        manifest_resp = await client.get(url, headers=headers)
+        if manifest_resp.status_code != 200:
+            raise HTTPException(status_code=500, detail="Failed to fetch manifest paths")
+        
+        manifest_data = manifest_resp.json()
+
+        # 2. Get the specific URL for the English 'DestinyRecordDefinition'
+        record_path = manifest_data['Response']['jsonWorldComponentContentPaths']['en']['DestinyRecordDefinition']
+        full_record_url = f"https://www.bungie.net{record_path}"
+
+        # 3. Download the actual data dictionary
+        print(f"\n[MANIFEST] Downloading Manifest Records from: {full_record_url} ...")
+        record_resp = await client.get(full_record_url)
+        
+        return record_resp.json()
+    
 def get_bungie_auth_url() -> str:
     auth_url = f"https://www.bungie.net/en/OAuth/Authorize?client_id={client_id}&response_type=code&state=capstone123"
     return auth_url
@@ -113,4 +141,29 @@ async def get_user_memberships(access_token: str) -> dict:
             print("=======================================\n")
             raise HTTPException(status_code=response.status_code, detail="Failed to fetch user profile")
             
+        return response.json()
+    
+async def get_profile_records(membership_type: int, membership_id: str, access_token: str) -> dict:
+    url = f"https://www.bungie.net/Platform/Destiny2/{membership_type}/Profile/{membership_id}/?components=900"
+
+    raw_api_key = os.getenv("BUNGIE_API_KEY", "")
+    clean_api_key = raw_api_key.strip(' "\'\r\n\ufeff')
+    clean_token = access_token.strip(' "\'\r\n\ufeff')
+
+    headers = {
+        "X-API-Key": clean_api_key,
+        "Authorization": f"Bearer {clean_token}",
+        "User-Agent": "DestinyPatternTracker/1.0"
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+          
+        if response.status_code != 200:
+            print("\n=== BUNGIE API REJECTED THE REQUEST ===")
+            print(f"Bungie Status Code: {response.status_code}")
+            print(f"Bungie Error: {repr(response.text[:250])}") 
+            print("=======================================\n")
+            raise HTTPException(status_code=response.status_code, detail="Failed to fetch user records")
+                
         return response.json()
