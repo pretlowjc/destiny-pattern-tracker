@@ -9,7 +9,10 @@ import { BungieApiService } from '../../core/services/bungie-api.service';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
+
+
 export class DashboardComponent implements OnInit {
+  errorMessage = signal<string | null>(null);
 
   // --- DAY 13: STATE MANAGEMENT (Signals) ---
   weapons = signal<any[]>([]);
@@ -80,13 +83,16 @@ export class DashboardComponent implements OnInit {
   }
 
   fetchPatterns(): void {
+    this.errorMessage.set(null);
+
     this.bungieApi.getWeaponPatterns().subscribe({
       next: (data) => {
-        this.weapons.set(data);     // Update the Signal
-        this.isLoading.set(false);  // Update the Signal
+        this.weapons.set(data);
+        this.isLoading.set(false);
       },
       error: (err) => {
         console.error("Failed to fetch weapons:", err);
+        this.errorMessage.set("Lost connection to Bungie servers. Please try again later.");
         this.isLoading.set(false);
       }
     });
