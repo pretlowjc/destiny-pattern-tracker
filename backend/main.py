@@ -31,7 +31,7 @@ async def load_manifest_on_startup():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=["http://localhost:4200", "https://d2patterntracker.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -141,7 +141,7 @@ async def bungie_auth_callback(code: str, state: str):
     safe_token = urllib.parse.quote(access_token)
     
     # Send them back to Angular using the safe token
-    frontend_url = f"http://localhost:4200/dashboard?token={safe_token}"
+    frontend_url = f"https://d2patterntracker.com/dashboard?token={safe_token}"
 
     return RedirectResponse(url=frontend_url)
 

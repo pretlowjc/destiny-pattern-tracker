@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class BungieApiService {
-  private apiUrl = 'https://127.0.0.1:8000/api';
+  private apiUrl = 'https://d2patterntracker.com/api';
 
   constructor(private http: HttpClient) {}
 

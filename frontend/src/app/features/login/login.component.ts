@@ -11,6 +11,6 @@ export class LoginComponent {
   loginWithBungie(): void {
     // This physically redirects the user's browser to the FastAPI backend
     // which then automatically bounces them to the offical Bungie login screen.
-    window.location.href = 'https://127.0.0.1:8000/api/auth/login';
+    window.location.href = 'https://d2patterntracker.com/api/auth/login';
   }
 }
