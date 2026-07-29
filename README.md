@@ -109,7 +109,7 @@ Backend on `:8000`, frontend (via Nginx) on `:4200`, with `/api/*` proxied to th
 
 ## Deployment
 
-The frontend is built to static assets and served by Nginx; the backend runs as a standalone container behind a reverse proxy. See [docker-compose.yml](docker-compose.yml) and each service's `Dockerfile` for the current container setup. A move to a fully managed AWS deployment (S3 + CloudFront for the frontend, Lambda + API Gateway for the backend) is in progress — see the project's deployment notes for the current migration plan and open gaps before treating that path as production-ready.
+The frontend is built to static assets and served by Nginx; the backend runs as a standalone container behind a reverse proxy. See [docker-compose.yml](docker-compose.yml) and each service's `Dockerfile` for the current container setup. A move to a fully managed AWS deployment (S3 + CloudFront for the frontend, Lambda + API Gateway for the backend) is planned but not yet implemented — see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the migration plan, known security issues, and open gaps before treating that path as production-ready.
 
 ## Known Limitations
 
