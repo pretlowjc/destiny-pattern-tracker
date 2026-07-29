@@ -1,0 +1,55 @@
+name: Destiny 2 App CI/CD Pipeline
+# Force GitHub to use the new Node 24 runners
+env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+# 1. THE TRIGGER: When should the robot wake up?
+# We are telling it to run every time code is pushed to the 'main' or 'develop' branches.
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main, develop]
+
+# 2. THE JOBS: What tasks should the robot do?
+jobs:
+    # --- JOB 1:    Test the frontend ---
+    test-frontend-build:
+        # Github turns on a brand new Ubuntu Linux computer in the cloud
+        runs-on: ubuntu-latest
+
+        steps:
+            # Step A: Download your code from the repository onto the cloud computer
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            # Step B: Install Node.js on the cloud computer
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            # Step C: Go into the frontend folder and download Angular packages
+            - name: Install Dependencies
+              working-directory: ./frontend
+              run: npm install
+
+            # Step D: The Ultimate Test. Try to compile the app.
+            # If your code has syntax errors, this will fail and the pipeline will turn red!
+            - name: Test Angular Production Build
+              working-directory: ./frontend
+              run: npm run build --configuration=production
+
+    # --- JOB 2: Test the Backend Docker Image ---
+    test-backend-folder:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            # Step A: Go into the backend folder and try to build your Python docker recipe.
+            # If your Dockerfile has typos, this will fail!
+            - name: Verify Backend Docker Build
+              working-directory: ./backend
+              run: docker build -t destiny-backend-test .
