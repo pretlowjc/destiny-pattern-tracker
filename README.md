@@ -107,7 +107,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-Create `backend/.env`:
+Copy backend/.env.example to backend/.env and fill in your values:
 
 ```
 BUNGIE_API_KEY=your_api_key
