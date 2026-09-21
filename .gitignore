@@ -1,1 +1,14 @@
+# Secrets
 .env
+*.pem
+
+# Python
+vevn/
+__pycache__/
+*.pyc
+*.db
+
+# Angular / Node
+node_modules/
+.angular/
+dist/
